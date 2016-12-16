@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # A recommendation system. Based on (Segaran, 2007).
 
 from math import sqrt
@@ -135,6 +138,48 @@ def transformPrefs(prefs):
 
     return result
 
+# Generates a data set of similar items.
+def calculateSimilarItems(prefs, n = 10):
+    # Create a dictionary of items showing which other items they are most
+    # similar to.
+    result = {}
+
+    # Invert the preference matrix to be item-centric.
+    itemPrefs = transformPrefs(prefs)
+    c = 0
+    for item in itemPrefs:
+        # Status updates for large data sets.
+        c += 1
+        if c%100 == 0:
+            print "%d / %d" % (c, len(itemPrefs))
+        # Find the most similar items to this one.
+        scores = topMatches(itemPrefs, item, n = n, similarity = sim_distance)
+        result[item] = scores
+    return result
+
+def getRecommendedItems(prefs,itemMatch,user):
+    userRatings=prefs[user]
+    scores={}
+    totalSim={}
+    # Loop over items rated by this user
+    for (item,rating) in userRatings.items( ):
+        # Loop over items similar to this one
+        for (similarity,item2) in itemMatch[item]:
+            # Ignore if this user has already rated this item
+            if item2 in userRatings: continue
+            # Weighted sum of rating times similarity
+            scores.setdefault(item2,0)
+            scores[item2]+=similarity*rating
+            # Sum of all the similarities
+            totalSim.setdefault(item2,0)
+            totalSim[item2]+=similarity
+        # Divide each total score by total weighting to get an average
+        rankings=[(score/totalSim[item],item) for item,score in scores.items( )]
+    # Return the rankings from highest to lowest
+    rankings.sort( )
+    rankings.reverse( )
+    return rankings
+
 if __name__ == "__main__":
 
     #print(sim_distance(reviews_data_base, 'Diana Sanchez', 'Adam Zapata'))
@@ -203,3 +248,11 @@ if __name__ == "__main__":
     print "Best choices of guests to invite to go and see 'Just My Luck' are:"
     for measure, people in people_recommendation:
         print people
+
+    itemsim = calculateSimilarItems(reviews_data_base)
+
+    print('Similar items to each of the items:')
+    print(itemsim)
+
+    print('Recommendations for Eduardo Sanchez:')
+    print(getRecommendedItems(reviews_data_base, itemsim, 'Eduardo Sanchez'))
