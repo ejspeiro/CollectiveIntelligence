@@ -96,3 +96,6 @@ pydelicious/
 setup.py
 tests/
 tools/
+*.tar.gz
+beautifulsoup4-4.5.1
+*.db
